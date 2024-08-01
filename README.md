@@ -30,7 +30,7 @@ and/or [`nao_meshes`](https://github.com/ros-naoqi/nao_meshes2) can be useful to
 On Ubuntu, install them using:
 
 ```sh
-sudo apt-get install ros-<distro>-naoqi-libqi ros-<distro>-naoqi-libqicore ros-<distro>-naoqi-bridge-msgs ros-<distro>-pepper-meshes ros-<distro>-nao-meshes
+sudo apt-get install ros-$ROS_DISTRO-naoqi-libqi ros-$ROS_DISTRO-naoqi-libqicore ros-$ROS_DISTRO-naoqi-bridge-msgs ros-$ROS_DISTRO-pepper-meshes ros-$ROS_DISTRO-nao-meshes
 ```
 
 ### Installing from source
@@ -38,10 +38,11 @@ sudo apt-get install ros-<distro>-naoqi-libqi ros-<distro>-naoqi-libqicore ros-<
 In your ROS2 workspace, clone the repo and its dependencies:
 
 ```sh
-cd <ws>/src
+mkdir -p workspace/src
+cd workspace/src
 git clone https://github.com/ros-naoqi/naoqi_driver2.git
 vcs import < naoqi_driver2/dependencies.repos
-cd <ws>
+cd workspace
 rosdep install --from-paths src --ignore-src --rosdistro <distro> -y
 ```
 
@@ -50,7 +51,33 @@ rosdep install --from-paths src --ignore-src --rosdistro <distro> -y
 Then build the workspace:
 
 ```sh
-cd <ws>
+cd workspace
+colcon build --symlink-install
+```
+
+> Meshes can only be built on x86(_64) platforms.
+> You can skip them by building with these arguments:
+>
+> ```sh
+> colcon build --packages-skip nao_meshes pepper_meshes
+> ```
+
+### Setting up Docker
+
+In your ROS2 workspace, clone the repo and build dockerfile
+
+```sh
+cd workspace/src
+git clone https://github.com/ros-naoqi/naoqi_driver2.git
+cd naoqi_driver2/docker
+docker compose -f compose-build.yaml build
+docker compose -f compose-build.yaml up
+```
+
+Then build the workspace:
+
+```sh
+cd workspace
 colcon build --symlink-install
 ```
 
@@ -103,7 +130,7 @@ qicli call ALMotion.wakeUp
 The driver can be launched from a remote machine this way:
 
 ```sh
-source /opt/ros/<distro>/setup.bash # or source <ws>/install/setup.bash if built from source
+source /opt/ros/$ROS_DISTRO/setup.bash # or source workspace/install/setup.bash if built from source
 ros2 launch naoqi_driver naoqi_driver.launch.py nao_ip:=<robot_host> qi_listen_url:=tcp://0.0.0.0:0
 ```
 
@@ -124,7 +151,7 @@ If you run __naoqi_driver__ from a Docker container with audio features enabled,
 you must specify the libQi endpoint with, *e.g.* for port 56000:
 
 ```sh
-source /opt/ros/<distro>/setup.bash # or source <ws>/install/setup.bash if built from source
+source /opt/ros/<distro>/setup.bash # or source workspace/install/setup.bash if built from source
 ros2 launch naoqi_driver naoqi_driver.launch.py nao_ip:=<robot_host> qi_listen_url:=tcp://0.0.0.0:56000
 ```
 

@@ -1,35 +1,40 @@
-ARG ROS_DISTRO=iron
+ARG ROS_DISTRO=humble
+
 FROM ros:${ROS_DISTRO} as dev
+
 ENV ROS_DISTRO=${ROS_DISTRO}
 ENV DEBIAN_FRONTEND=noninteractive
-SHELL ["/bin/bash", "-c"]
-
-# Create Colcon workspace with the project and its deps
-ENV WS=/ws
-ENV PROJ_SRC=${WS}/src/naoqi_driver
-COPY . $PROJ_SRC
-WORKDIR $WS/src
-RUN apt install -y git python3-vcstool
-RUN vcs import < $PROJ_SRC/dependencies.repos
-
-# Build the base Colcon workspace, installing dependencies first.
-WORKDIR $WS
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
-  && apt-get update -y \
-  && rosdep update \
-  && rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y
+ENV workspace=/pepper
 
 # Install extra tools for development
-RUN apt-get update && apt-get install -y --no-install-recommends \
- gdb gdbserver nano libgmock-dev
+RUN apt-get update -y
+RUN apt-get install -y --no-install-recommends  gdb \
+                                                gdbserver \
+                                                nano \
+                                                libgmock-dev \
+                                                git \
+                                                python3-vcstool
 
-# Expect to mount the source code from the host.
-VOLUME $PROJ_SRC
+# Create Colcon workspace with the project and its deps
 
-# Every bash instance should source the entrypoint
-RUN echo "source ${PROJ_SRC}/docker/entrypoint.sh" >> /root/.bashrc
-SHELL [ "/bin/bash", "-c" ]
-ENTRYPOINT [ "/bin/bash" ]
+WORKDIR ${workspace}/src
 
-FROM dev as dev-prebuilt
-RUN colcon build --symlink-install
+RUN git clone https://github.com/AIResearchLab/naoqi_driver2.git
+
+RUN vcs import < naoqi_driver2/dependencies.repos
+
+# Build the base Colcon workspace, installing dependencies first.
+WORKDIR ${workspace}
+
+RUN . /opt/ros/${ROS_DISTRO}/setup.sh \
+  && apt-get update -y \
+  && rosdep update \
+  && rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y \
+  &&  colcon build --symlink-install
+
+WORKDIR /
+  
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+  
+ENTRYPOINT [ "/entrypoint.sh" ]

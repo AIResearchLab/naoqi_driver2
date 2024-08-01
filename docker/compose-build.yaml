@@ -1,0 +1,22 @@
+services:
+  pepper:
+    build:
+      dockerfile: Dockerfile
+    environment:
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    command: ros2 launch naoqi_driver naoqi_driver.launch.py nao_ip:=10.0.0.244 qi_listen_url:=tcp://0.0.0.0:56000
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    expose: 
+      - 56000
+    volumes:
+      - /dev:/dev
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
+      - pepper:/pepper
+
+volumes:
+  pepper:
