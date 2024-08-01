@@ -134,6 +134,10 @@ source /opt/ros/$ROS_DISTRO/setup.bash # or source workspace/install/setup.bash 
 ros2 launch naoqi_driver naoqi_driver.launch.py nao_ip:=<robot_host> qi_listen_url:=tcp://0.0.0.0:0
 ```
 
+Eg: 
+```sh
+ros2 launch naoqi_driver naoqi_driver.launch.py nao_ip:=10.0.0.244 qi_listen_url:=tcp://0.0.0.0:0
+```
 
 ### NAOqi 2.9 and higher
 
